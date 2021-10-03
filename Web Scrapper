@@ -1,0 +1,36 @@
+import requests
+from bs4 import BeautifulSoup
+import os
+import re
+
+
+pages = int(input())
+article = str(input())
+for page in range(pages):
+    os.chdir('D:\Python\Web Scraper\Web Scraper\\task')
+    os.mkdir('Page_'+str(page + 1))
+    url = 'https://www.nature.com/nature/articles?sort=PubDate&year=2020&page='+str(page + 1)
+    url_content = requests.get(url, headers={"Accept-Language": "en-US, en; q=0.5"})
+    soup = BeautifulSoup(url_content.content, 'html.parser')
+    articles = soup.findAll('article', {'itemtype':'http://schema.org/ScholarlyArticle'})
+    os.chdir('D:\Python\Web Scraper\Web Scraper\\task\Page_'+str(page + 1))
+    for i in range(0,20):
+        article_type = articles[i].find('span', {'class':'c-meta__type'}).text
+        if article_type == article:
+            article_title_class = articles[i].find('a', {'class': 'c-card__link u-link-inherit'})
+            article_title = article_title_class.text
+   #         print(article_title)           # check if article title is correct
+            article_link = article_title_class['href']
+            article_link = 'https://www.nature.com' + article_link
+            article_get = requests.get(article_link, headers={"Accept-Language": "en-US, en; q=0.5"})
+            article_soup = BeautifulSoup(article_get.content, 'html.parser')
+            article_text = article_soup.find('div', {'class':'c-article-body'})
+            clean_title = article_title.replace(" ", "_")
+            clean_title = re.sub("[^A-Za-z0-9'_]+", "", clean_title)
+   #         print(clean_title)           # check if article title is correct after cleaning
+            if clean_title[-1] == '_':
+                clean_title = clean_title.rstrip('_')
+            article_text_by = article_text.text.strip(' ').encode()
+            file = open(clean_title + ".txt", 'wb')
+            file.write(article_text_by)
+            file.close()
