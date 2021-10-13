@@ -1,0 +1,158 @@
+applicants = open('applicant_list_7.txt', 'r')
+counter = 0
+candidates = []
+for line in applicants:
+    candidate = line.split()
+    if candidate[7] == 'Biotech':
+        prime_score = float((int(candidate[3]) + int(candidate[2])) / 2)
+        if float(candidate[6]) > prime_score:
+            prime_score = float(candidate[6])
+    elif candidate[7] == "Chemistry":
+        prime_score = float(candidate[3])
+        if float(candidate[6]) > prime_score:
+            prime_score = float(candidate[6])
+    elif candidate[7] == 'Engineering':
+        prime_score = float((int(candidate[5]) + int(candidate[4])) / 2)
+        if float(candidate[6]) > prime_score:
+            prime_score = float(candidate[6])
+    elif candidate[7] == 'Mathematics':
+        prime_score = float(candidate[4])
+        if float(candidate[6]) > prime_score:
+            prime_score = float(candidate[6])
+    elif candidate[7] == 'Physics':
+        prime_score = float((int(candidate[2]) + int(candidate[4]))/ 2)
+        if float(candidate[6]) > prime_score:
+            prime_score = float(candidate[6])
+    else:
+        print('Some shit happened - no choice?')
+    candidate.insert(2, prime_score)
+#    print(candidate)
+    candidates.append(candidate)
+
+    counter += 1
+applicants.close()
+#print(candidates)
+candidates.sort(key=lambda x: (-float(x[2]), x[0]))
+#print(counter)
+places = int(input())
+departments = ['Mathematics', 'Physics', 'Biotech', 'Chemistry', 'Engineering']
+departments.sort()
+departments_places = dict.fromkeys(departments,places)
+successful_applicants = {'Biotech':[], 'Chemistry':[], 'Engineering':[], 'Mathematics':[], 'Physics':[]}
+candidates_to_remove = []
+stage = 1
+while 1:
+    if stage == 1:
+        for candidate in candidates:
+            if candidate[9] == 'Biotech':
+                prime_score = float((int(candidate[4]) + int(candidate[3])) / 2)
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+            elif candidate[9] == "Chemistry":
+                prime_score = float(candidate[4])
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+            elif candidate[9] == 'Engineering':
+                prime_score = float((int(candidate[6]) + int(candidate[5])) / 2)
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+            elif candidate[9] == 'Mathematics':
+                prime_score = float(candidate[5])
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+            elif candidate[9] == 'Physics':
+                prime_score = float((int(candidate[3]) + int(candidate[5])) / 2)
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+
+            #print(candidate[0:2])
+            if candidate[0:2] == candidates[-1][0:2]:
+                stage += 1
+                for remove_candidate in candidates_to_remove:
+                    candidates.remove(remove_candidate)
+                remaining_candidates = candidates
+
+            dep = candidate[8]
+            if departments_places[dep] > 0:
+                departments_places[dep] -= 1
+                successful_applicants[dep].append(candidate[0:3])
+                candidates_to_remove.append(candidate)
+
+            if candidate[0:2] not in candidates_to_remove:
+                candidate[2] = float(prime_score)
+
+
+
+    if stage == 2:
+        candidates_to_remove = []
+        candidates.sort(key=lambda x: (-float(x[2]), x[0]))
+        for candidate in candidates:
+            #print(candidate[0:2])
+            if candidate[10] == 'Biotech':
+                prime_score = float((int(candidate[4]) + int(candidate[3])) / 2)
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+            elif candidate[10] == "Chemistry":
+                prime_score = float(candidate[4])
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+            elif candidate[10] == 'Engineering':
+                prime_score = float((int(candidate[6]) + int(candidate[5])) / 2)
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+            elif candidate[10] == 'Mathematics':
+                prime_score = float(candidate[5])
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+            elif candidate[10] == 'Physics':
+                prime_score = float((int(candidate[3]) + int(candidate[5])) / 2)
+                if float(candidate[7]) > prime_score:
+                    prime_score = float(candidate[7])
+
+            if candidate[0:2] == candidates[-1][0:2]:
+                stage += 1
+                for remove_candidate in candidates_to_remove:
+                    candidates.remove(remove_candidate)
+                remaining_candidates = candidates
+            dep = candidate[9]
+            if departments_places[dep] > 0:
+                departments_places[dep] -= 1
+                successful_applicants[dep].append(candidate[0:3])
+                candidates_to_remove.append(candidate)
+            if candidate[0:2] not in candidates_to_remove:
+                candidate[2] = float(prime_score)
+
+    if stage == 3:
+        candidates_to_remove = []
+        candidates.sort(key=lambda x: (-float(x[2]), x[0]))
+        for candidate in candidates:
+            #print(candidate[0:2])
+            if candidate[0:2] == candidates[-1][0:2]:
+                stage += 1
+                for remove_candidate in candidates_to_remove:
+                    candidates.remove(remove_candidate)
+                remaining_candidates = candidates
+            if candidate[10]:
+                dep = candidate[10]
+            if departments_places[dep] > 0:
+                departments_places[dep] -= 1
+                successful_applicants[dep].append(candidate[0:3])
+                candidates_to_remove.append(candidate)
+    if stage == 4:
+        candidates.sort(key=lambda x: (-float(x[2]), x[0]))
+#        print(candidates)
+#        print(remaining_candidates)
+#        print(successful_applicants)
+#        print(departments_places)
+        for department in departments:
+#            print(department)
+            file = open(department + '.txt', 'w')
+            successful_applicants[department].sort(key=lambda x: (-float(x[2]), x[0]))
+            for i in successful_applicants[department]:
+                i[2] = str(i[2])
+                file.write(" ".join(i))
+                file.write("\n")
+#                print(" ".join(i))
+#            print('\r')
+        # print(departments_places)
+        break
