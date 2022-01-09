@@ -1,0 +1,93 @@
+state = '_________'
+x_counter = 0
+o_counter = 0
+empty_cells = 0
+who_won = ''
+tic_tac_list = list(state)
+player = 'X'
+print(f"""
+---------
+| {tic_tac_list[0]} {tic_tac_list[1]} {tic_tac_list[2]} |
+| {tic_tac_list[3]} {tic_tac_list[4]} {tic_tac_list[5]} |
+| {tic_tac_list[6]} {tic_tac_list[7]} {tic_tac_list[8]} | 
+---------
+""")
+
+
+while 1:
+    i = -1
+    x_counter = 0
+    o_counter = 0
+    empty_cells = 0
+    try:
+        y, x = input('Enter the coordinates: ').split()
+        x = int(x)
+        y = int(y)
+        if x > 3 or y > 3:
+            print('Coordinates should be from 1 to 3!')
+        if y == 1:
+            i = 0
+        elif y == 2:
+            i = 3
+        elif y == 3:
+            i = 6
+        if x == 1:
+            pass
+        elif x == 2:
+            i += 1
+        elif x == 3:
+            i += 2
+        if i >= 0:
+            if tic_tac_list[i] == '_':
+                if player == 'X':
+                    tic_tac_list[i] = 'X'
+                    player = 'O'
+                elif player == 'O':
+                    tic_tac_list[i] = 'O'
+                    player = 'X'
+
+            else:
+                print('This cell is occupied! Choose another one!')
+
+    except ValueError:
+        print('You should enter numbers!')
+    print(f"""
+    ---------
+    | {tic_tac_list[0]} {tic_tac_list[1]} {tic_tac_list[2]} |
+    | {tic_tac_list[3]} {tic_tac_list[4]} {tic_tac_list[5]} |
+    | {tic_tac_list[6]} {tic_tac_list[7]} {tic_tac_list[8]} | 
+    ---------
+    """)
+    for i in tic_tac_list:
+        if i == 'X':
+            x_counter += 1
+        if i == 'O':
+            o_counter += 1
+        if i == '_':
+            empty_cells += 1
+
+    if tic_tac_list[0:3] == 'OOO' or tic_tac_list[3:6] == 'OOO' or tic_tac_list[6:9] == 'OOO' or tic_tac_list[0] + \
+            tic_tac_list[4] + tic_tac_list[8] == 'OOO' \
+            or tic_tac_list[6] + tic_tac_list[4] + tic_tac_list[2] == 'OOO' or tic_tac_list[0] + tic_tac_list[3] + \
+            tic_tac_list[6] == 'OOO' or \
+            tic_tac_list[1] + tic_tac_list[4] + tic_tac_list[7] == 'OOO' or tic_tac_list[2] + tic_tac_list[5] + \
+            tic_tac_list[8] == 'OOO':
+        who_won = 'O wins'
+
+    if tic_tac_list[0:3] == 'XXX' or tic_tac_list[3:6] == 'XXX' or tic_tac_list[6:9] == 'XXX' or tic_tac_list[0] + \
+            tic_tac_list[4] + tic_tac_list[8] == 'XXX' \
+            or tic_tac_list[6] + tic_tac_list[4] + tic_tac_list[2] == 'XXX' or tic_tac_list[0] + tic_tac_list[3] + \
+            tic_tac_list[6] == 'XXX' \
+            or tic_tac_list[1] + tic_tac_list[4] + tic_tac_list[7] == 'XXX' or tic_tac_list[2] + tic_tac_list[5] + \
+            tic_tac_list[8] == 'XXX':
+        if who_won == 'O wins':
+            who_won = 'Impossible'
+        else:
+            who_won = 'X wins'
+
+    if empty_cells == 0 and who_won == '':
+        print('Draw')
+        break
+    elif who_won != '':
+        print(who_won)
+        break
