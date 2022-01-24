@@ -1,0 +1,120 @@
+
+import argparse
+import sys
+import math
+
+initial_args = sys.argv
+n = 0
+missing = 0
+parser = argparse.ArgumentParser()
+choice = ''
+for x in initial_args:
+    if "--interest" not in x:
+        if x == initial_args[-1]:
+            print("Incorrect parameters")
+            quit()
+    else:
+        break
+
+for checker in initial_args:
+    if '=' in checker:
+        checker = checker.split(sep='=')
+    if checker[0] == '--type':
+        if checker[1] != 'diff' and checker[1] != 'annuity':
+            print("Incorrect parameters")
+            quit()
+        if checker[1] == 'diff' and "--payment" in initial_args:
+            print("Incorrect parameters")
+            quit()
+    if checker[0] == '--interest':
+        if checker[1] == None or checker[1] == '':
+            print("Incorrect parameters")
+            quit()
+        interest = float(checker[1])
+    if checker[0] == '--payment':
+        payment = float(checker[1])
+    if checker[0] == '--principal':
+        principal = float(checker[1])
+    if checker[0] == '--periods':
+        periods = int(checker[1])
+    if checker[1] == None or checker[1] == '':
+        if checker[0] != '--payment':
+            missing += 1
+            if missing > 1:
+                print("Incorrect parrameters")
+                quit()
+    n += 1
+if n < 5:
+    print("Incorrect parrameters")
+    quit()
+
+parser.add_argument("--type", choices=["diff", "annuity"], help='You should pick either diff or annuity')
+parser.add_argument("--payment", help='Initial monthly payment amount')
+parser.add_argument("--principal")
+parser.add_argument("--periods")
+parser.add_argument("--interest")
+args = parser.parse_args()
+if args.type != 'diff' and args.type != 'annuity':
+    print('Incorrect parameters')
+    quit()
+if args.interest == '' or args.interest == None:
+    print('Incorrect parameters')
+    quit()
+try:
+    payment = float(args.payment)
+except TypeError:
+    payment = None
+    choice = payment
+
+try:
+    principal = int(args.principal)
+except TypeError:
+    principal = None
+    choice = principal
+
+try:
+    periods = int(args.periods)
+except TypeError:
+    periods = None
+    choice = periods
+try:
+    interest = float(args.interest)
+except TypeError:
+    interest = None
+    choice = interest
+
+
+i = interest / (12 * 100)
+
+if args.payment == None:
+    if args.type == 'diff':
+        overpayment = 0
+        for k in range(1, periods+1):
+            D = int(-(-(principal / periods + i * (principal - (principal * (k - 1) / periods)))//1))
+            overpayment += D - (principal / periods)
+            print(f"Month {k}: payment is {D}")
+        overpayment = int(overpayment)
+        print(f"\nOverpayment = {overpayment}")
+    elif args.type == 'annuity':
+        payment = int(-(- principal * ((i * math.pow((1 + i), periods)) / (math.pow((1 + i), periods) - 1)) // 1))
+        overpayment = int((payment - principal / periods) * periods)
+        print(f'Payment is {payment}')
+        print(f'\nOverpayment = {overpayment}')
+if args.principal == None:
+    if args.type == 'annuity':
+        principal = int(payment / ((i * math.pow((1 + i), periods)) / (math.pow((1 + i), periods) - 1)))
+        overpayment = int((payment - principal / periods) * periods)
+        print(f'Your loan principal = {principal}!')
+        print(f'Overpayment = {overpayment}')
+
+if args.periods == None:
+    if args.type == 'annuity':
+        log_x = payment / (payment - (i * principal))
+        log_base = 1 + i
+        periods = math.log(log_x, log_base)
+        periods = -(-periods // 1)
+        years = int(periods // 12)
+        months = int(periods % 12)
+        overpayment = int((payment - principal / periods) * periods)
+        print(f'It will take {years} years and {months} months to repay this loan!')
+        print(f'Overpayment = {overpayment}')
