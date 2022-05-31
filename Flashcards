@@ -1,0 +1,264 @@
+import random
+import os
+import logging
+import io
+import sys
+import argparse
+
+class DuplicateErrorTerm(Exception):
+    def __str__(self):
+        return (f'The term "{Flashcard.card}" already exists. Try again:')
+
+class DuplicateErrorDef(Exception):
+    def __str__(self):
+        return(f'The definition "{Flashcard.definition}" already exists. Try again:')
+
+class Flashcard:
+    def __init__(self, card, definition):
+        self.card = card
+        self.definition = definition
+
+
+def get_term():
+    print(f'The card:')
+    while 1:
+        Flashcard.card = input()
+        try:
+            if Flashcard.card in Flashcards.keys():
+                raise DuplicateErrorTerm
+            else:
+                return Flashcard.card
+                break
+        except DuplicateErrorTerm as err:
+            print(err)
+
+
+def get_def():
+    print(f'The definition of the card:')
+    while 1:
+        try:
+            Flashcard.definition = input()
+            if Flashcard.definition in Flashcards.values():
+                raise DuplicateErrorDef
+            else:
+                return Flashcard.definition
+                break
+        except DuplicateErrorDef as err:
+            print(err)
+
+
+def add_card():
+    get_term()
+    get_def()
+    Flashcards.update({Flashcard.card: Flashcard.definition})
+    Wrong_answers.update({Flashcard.card: 0})
+    print(f'The pair (\"{Flashcard.card}\":\"{Flashcard.definition}\") has been added.')
+
+def remove_card():
+    print('Which card?')
+    try:
+        to_remove = input()
+        Flashcards.pop(to_remove)
+        print('The card has been removed.')
+    except KeyError:
+        print(f'Can\'t remove "{to_remove}": there is no such card.')
+
+
+def ask_question():
+    i = 0
+    print('How many times to ask?')
+    while 1:
+        try:
+            questions = int(input())
+            if questions > 0:
+                break
+            else:
+                pass
+        except KeyError:
+            print('You should provide an positive intiger value')
+        except ValueError:
+            print('Provide questions first')
+
+    while 1:
+        try:
+            if i < questions:
+                flashcards_keys = list(Flashcards.keys())
+                x = flashcards_keys[random.randint(0, len(flashcards_keys) - 1)]
+                print(f'Print the definition of "{x}"')
+                i += 1
+                definition = input()
+                if definition == Flashcards[x]:
+                    print('Correct!')
+                    logger.info(f'Correct answer for {x}')
+                else:
+                    if definition in Flashcards.values():
+                        print(f'Wrong. The right answer is \"{Flashcards[x]}\", but your definition is correct for \"{list(Flashcards.keys())[list(Flashcards.values()).index(definition)]}\"')
+                        logger.info(f'Wrong answer for {x}')
+                    else:
+                        print(f'Wrong. The right answer is \"{Flashcards[x]}\".')
+                        logger.info(f'Wrong answer for {x}')
+                    wrg = int(Wrong_answers[x])
+                    wrg += 1
+                    Wrong_answers.update({x: wrg})
+            else:
+                break
+        except ValueError:
+            print('Provide questions first')
+            break
+
+
+def import_questions(file_name):
+    counter = 0
+    if not file_name:
+        print('File name:')
+        file_name = input()
+    if not os.access(file_name, os.F_OK):
+        print('File not found.')
+    else:
+        file = open(file_name, 'r')
+        for line in file:
+            counter += 1
+            line = line.strip('\n')
+            k, v, c = line.split(sep=':')
+            Flashcards.update({k : v})
+            Wrong_answers.update({k : c})
+        file.close()
+        print(f'{counter} cards have been loaded.')
+        print(Wrong_answers)
+
+
+
+def export_questions(file_name):
+    counter = 0
+    if not file_name:
+        print('File name:')
+        file_name = input()
+    file = open(file_name, 'w')
+    for key, value in Flashcards.items():
+        for card, wrong in Wrong_answers.items():
+            if key == card:
+                file.write(str(key))
+                file.write(':')
+                file.write(str(value))
+                file.write(':')
+                file.write(str(wrong))
+                file.write('\n')
+        counter += 1
+    file.close()
+    print(f'{counter} cards have been saved.')
+
+
+def get_logs():
+    print('File name:')
+    log_file = input()
+    with open(default_log, 'r') as f1, open(log_file, 'a') as f2:
+        for line in f1:
+            f2.write(line)
+    print("The log has been saved.")
+
+def check_hardest():
+    wrg = 0
+    for val in Wrong_answers.values():
+        val = int(val)
+        if val > wrg:
+            wrg = val
+    hardest = []
+    for k, v in Wrong_answers.items():
+        v = int(v)
+        if v >= wrg:
+            hardest.append(k)
+            wrg = v
+    str_hardest = '", "'.join(hardest)
+    if wrg == 0:
+        print('There are no cards with errors.')
+    else:
+        if len(hardest) > 1:
+
+            print(f'The hardest card is "{str_hardest}". You have {wrg} errors answering it.')
+        else:
+            print(f'The hardest card is "{str_hardest}". You have {wrg} errors answering it.')
+
+
+def reset_stats():
+    for k in Wrong_answers.keys():
+        Wrong_answers[k] = 0
+    print('Card statistics have been reset.')
+
+
+class LoggerOut:
+    def __init__(self, filename):
+        self.terminal = sys.stdout
+        self.filename = filename
+
+    def write(self, message):
+        self.terminal.write(message)
+        with open(self.filename, "a") as file:
+            print(message, file=file, flush=True, end='')
+
+    def flush(self):
+        pass
+
+
+class LoggerIn:
+    def __init__(self, filename):
+        self.terminal = sys.stdin
+        self.filename = filename
+
+    def readline(self):
+        entry = self.terminal.readline()
+        with open(self.filename, "a") as file:
+            print(entry.rstrip(), file=file, flush=True)
+        return entry
+
+
+default_log = 'default.txt'
+sys.stdout = LoggerOut(default_log)
+sys.stdin = LoggerIn(default_log)
+
+Flashcards = {}
+Wrong_answers = {}
+
+io.StringIO()
+logger = logging.getLogger()
+logger.setLevel(logging.WARNING)
+console_handler = logging.StreamHandler()
+log_format = '%(levelname)s: %(message)s'
+console_handler.setFormatter(logging.Formatter(log_format))
+logger.addHandler(console_handler)
+parser = argparse.ArgumentParser()
+parser.add_argument("--import_from", default=False)
+parser.add_argument("--export_to", default=False)
+args = parser.parse_args()
+
+if args.import_from:
+    import_questions(args.import_from)
+
+
+while 1:
+    print('Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):')
+    action = input()
+    if action == 'add':
+        add_card()
+    elif action == 'remove':
+        remove_card()
+    elif action == 'import':
+        import_questions(args.import_from)
+    elif action == 'export':
+        export_questions(args.export_to)
+    elif action == 'ask':
+        ask_question()
+    elif action == 'exit':
+
+        if args.export_to == False:
+            print('bye bye')
+            break
+        else:
+            export_questions(args.export_to)
+            print('bye bye')
+            break
+    elif action == 'log':
+        get_logs()
+    elif action == 'hardest card':
+        check_hardest()
+    elif action == 'reset stats':
+        reset_stats()
