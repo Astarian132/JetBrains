@@ -1,0 +1,245 @@
+# Version just to pass JetBrains tests, because AST was introduced in last step. 
+
+import sys
+import re
+import os
+import inflection
+import ast
+from natsort import natsorted
+errors = []
+
+
+def S001(line, i):
+    try:
+        if len(line) > 79:
+            raise Exception(f'{dir_path}{os.sep}{file_path}: Line {i}: S001 Too long')
+    except Exception as err:
+        errors.append(f'{dir_path}{os.sep}{file_path}: Line {i}: S001 Too long')
+
+
+def S002(line, i):
+    try:
+        if line.startswith('#'):
+            pass
+        elif len(line) <= 2:
+            pass
+        elif not re.search('^( {4})*[\w@]', line):
+            raise Exception(f'{dir_path}{os.sep}{file_path}: Line {i}: S002 Indentation is not a multiple of four')
+    except Exception as err:
+        errors.append(f'{dir_path}{os.sep}{file_path}: Line {i}: S002 Indentation is not a multiple of four')
+
+
+def S003(line, i):
+    try:
+        if re.search((';'), line):
+            if re.search('#', line):
+                if ';' in (line[0:re.search('#', line).start()]):
+                    raise Exception((f'{dir_path}{os.sep}{file_path}: Line {i}: S003 Unnecessary semicolon'))
+                    # trzeba uwzględnić ';'
+
+            elif re.search(".*\'.*;.*\'.*", line):
+                # print(re.search("\'.*;.*\'", line))
+                pass
+            else:
+                raise Exception((f'{dir_path}{os.sep}{file_path}: Line {i}: S003 Unnecessary semicolon'))
+            '''if not '#' in line[0:re.search('#').start()]:
+                errors.append((f'Line {i}: S003 Unnecessary semicolon'))'''
+    except Exception as err:
+        errors.append(f'{dir_path}{os.sep}{file_path}: Line {i}: S003 Unnecessary semicolon')
+
+
+def S004(line, i):
+    try:
+        if re.search('#', line):
+            if line.startswith('#'):
+                pass
+            elif (line[re.search('#', line).start() - 2:re.search('#', line).start()]) != '  ':
+                raise Exception(
+                    (f'{dir_path}{os.sep}{file_path}: Line {i}: S004 At least two spaces required before inline comments'))
+    except Exception as err:
+        errors.append(f'{dir_path}{os.sep}{file_path}: Line {i}: S004 At least two spaces required before inline comments')
+
+
+def S005(line, i):
+    try:
+        if re.search('TODO', line.upper()):
+            if re.search('#', line):
+                raise Exception((f'{dir_path}{os.sep}{file_path}: Line {i}: S005 TODO found'))
+    except Exception as err:
+        errors.append(f'{dir_path}{os.sep}{file_path}: Line {i}: S005 TODO found')
+
+
+def S006(line, i, signal_blank):
+    try:
+        if signal_blank == 1:
+            raise Exception(
+                (f'{dir_path}{os.sep}{file_path}: Line {i}: S006 More than two blank lines used before this line'))
+    except Exception as err:
+        errors.append(f'{dir_path}{os.sep}{file_path}: Line {i}: S006 More than two blank lines used before this line')
+
+def S007(line, i):
+    try:
+        if re.search('[cC]lass\s{2}.*:', line):
+            raise Exception((f"{dir_path}{os.sep}{file_path}: Line {i}: S007 Too many spaces after 'class'"))
+        elif re.search('def\s{2}.*:', line):
+            raise Exception((f"{dir_path}{os.sep}{file_path}: Line {i}: S007 Too many spaces after 'def'"))
+    except Exception as err:
+        errors.append(f"{dir_path}{os.sep}{file_path}: Line {i}: S007 Too many spaces after 'def'")
+
+def S008(line, i):
+    try:
+        if re.search('class', line):
+            name = (re.search('class\s*\w*', line).string).lstrip('c').lstrip('l').lstrip('a').lstrip('s').lstrip('\s').rstrip('\s:').rstrip('\n')
+            name = name.strip(' :')
+            if inflection.camelize(name) != name:
+                raise Exception((f"{dir_path}{os.sep}{file_path}: Line {i}: S008 Class name \'{name}\' should use CamelCase"))
+    except Exception as err:
+        errors.append(f"{dir_path}{os.sep}{file_path}: Line {i}: S008 Class name \'{name}\' should use CamelCase")
+
+def S009(fun):
+    try:
+        name = fun.name
+        name2 = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+        if name != name2:
+            raise Exception(f"{dir_path}{os.sep}{file_path}: Line {fun.lineno}: S009 Function name \'{name}\' should be written in snake_case")
+    except Exception as err:
+        errors.append(f"{dir_path}{os.sep}{file_path}: Line {fun.lineno}: S009 Function name \'{name}\' should be written in snake_case")
+
+def S010(arg):
+    try:
+        name = arg.arg
+        name2 = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+        if name != name2:
+            raise Exception(
+                (f"{dir_path}{os.sep}{file_path}: Line {arg.lineno}: S010 Argument name \'{name}\' should be written in snake_case"))
+    except Exception as err:
+        errors.append(f"{dir_path}{os.sep}{file_path}: Line {arg.lineno}: S010 Argument name \'{name}\' should be written in snake_case")
+
+def S011(var_name, i):
+    try:
+        name = var_name
+        name2 = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+        if name != name2:
+            raise Exception(f"{dir_path}{os.sep}{file_path}: Line {i}: S011 Variable \'{name}\' should be written in snake_case")
+    except Exception as err:
+        errors.append(f"{dir_path}{os.sep}{file_path}: Line {i}: S011 Variable \'{name}\' should be written in snake_case")
+
+def S012(default):
+    try:
+        if type(default) == ast.List:
+            raise Exception(f"{dir_path}{os.sep}{file_path}: Line {default.lineno}: S012 The default argument value is mutable")
+    except Exception as err:
+        errors.append(f"{dir_path}{os.sep}{file_path}: Line {default.lineno}: S012 The default argument value is mutable")
+
+def check_line(line, i, signal_blank):
+    S001(line, i)
+    S002(line, i)
+    S003(line, i)
+    S004(line, i)
+    S005(line, i)
+    S006(line, i, signal_blank)
+    S007(line, i)
+    S008(line, i)
+
+os.sep = '\\'
+dir_path = sys.argv[1]
+if dir_path.endswith('.py'):
+    file_path = dir_path.split('\\')[-1]
+    dir_path = dir_path.rstrip(file_path)
+
+    dir_path = dir_path.rstrip('\\')
+    with open(f'{dir_path}{os.sep}{file_path}', 'r', encoding='utf-8') as f:
+        count_blank = 0
+
+        ast_file = f.read()
+        tree = ast.parse(ast_file)
+        nodes = ast.walk(tree)
+#        print(tree)
+        i = 0
+        for line in ast_file.split('\n'):
+            #            print(line)
+            signal_blank = 0
+            if line == '':
+                count_blank += 1
+            elif count_blank > 2 and line != '':
+                signal_blank = 1
+                count_blank = 0
+            else:
+                count_blank = 0
+            i += 1
+            check_line(line, i, signal_blank)
+
+        for node in nodes:
+            try:
+
+                if type(node) == ast.ClassDef:
+                    for fun in node.body:
+                        if type(fun) != ast.Pass:
+                            S009(fun)
+                            if fun.args:
+                                for arg in fun.args.args:
+                                    S010(arg)
+                                for default in fun.args.defaults:
+                                    S012(default)
+                                for var in fun.body:
+                                    if type(var) == ast.Assign:
+                                        for n in var.targets:
+                                            if type(n) == ast.Name:
+                                                S011(n.id, var.lineno)
+    #            print(ast.dump(node))
+                pass
+            except AttributeError:
+                pass
+
+
+
+else:
+    for file in os.listdir(dir_path):
+        if file.endswith('.py'):
+            file_path = file
+            with open(f'{dir_path}{os.sep}{file_path}', 'r', encoding='utf-8') as f:
+                count_blank = 0
+
+                ast_file = f.read()
+                tree = ast.parse(ast_file)
+                nodes = ast.walk(tree)
+                #        print(tree)
+                i = 0
+                for line in ast_file.split('\n'):
+                    #            print(line)
+                    signal_blank = 0
+                    if line == '':
+                        count_blank += 1
+                    elif count_blank > 2 and line != '':
+                        signal_blank = 1
+                        count_blank = 0
+                    else:
+                        count_blank = 0
+                    i += 1
+                    check_line(line, i, signal_blank)
+
+                for node in nodes:
+                    try:
+
+                        if type(node) == ast.ClassDef:
+                            for fun in node.body:
+                                if type(fun) != ast.Pass:
+                                    S009(fun)
+                                    if fun.args:
+                                        for arg in fun.args.args:
+                                            S010(arg)
+                                        for default in fun.args.defaults:
+                                            S012(default)
+                                        for var in fun.body:
+                                            if type(var) == ast.Assign:
+                                                for n in var.targets:
+                                                    if type(n) == ast.Name:
+                                                        S011(n.id, var.lineno)
+                        #            print(ast.dump(node))
+                        pass
+                    except AttributeError:
+                        pass
+
+natsorted(errors)
+for err in errors:
+   print(err)
